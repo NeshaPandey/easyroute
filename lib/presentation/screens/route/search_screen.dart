@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../domain/entities/route_entity.dart';
+import '../../../domain/repositories/place_repository.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -14,44 +17,52 @@ class _SearchScreenState extends State<SearchScreen> {
   final _destCtrl = TextEditingController();
   final _destFocus = FocusNode();
   bool _isSearching = false;
+  bool _isLoading = false;
   List<PlaceEntity> _suggestions = [];
+  Timer? _debounceTimer;
+  late final PlaceRepository _placeRepository;
 
-  // Demo suggestions
-  final _allPlaces = [
-    const PlaceEntity(id: 'p1', name: 'MG Road Metro Station',
-        address: 'MG Road, Bengaluru', latitude: 12.9758, longitude: 77.6060),
-    const PlaceEntity(id: 'p2', name: 'Lalbagh Botanical Garden',
-        address: 'Lalbagh, Bengaluru', latitude: 12.9507, longitude: 77.5848),
-    const PlaceEntity(id: 'p3', name: 'Bengaluru City Railway Station',
-        address: 'Majestic, Bengaluru', latitude: 12.9767, longitude: 77.5713),
-    const PlaceEntity(id: 'p4', name: 'Cubbon Park',
-        address: 'Cubbon Park, Bengaluru', latitude: 12.9763, longitude: 77.5929),
-    const PlaceEntity(id: 'p5', name: 'Indiranagar',
-        address: 'Indiranagar, Bengaluru', latitude: 12.9784, longitude: 77.6408),
-    const PlaceEntity(id: 'p6', name: 'Koramangala',
-        address: 'Koramangala, Bengaluru', latitude: 12.9352, longitude: 77.6245),
-    const PlaceEntity(id: 'p7', name: 'Whitefield',
-        address: 'Whitefield, Bengaluru', latitude: 12.9698, longitude: 77.7500),
-    const PlaceEntity(id: 'p8', name: 'Electronic City',
-        address: 'Electronic City, Bengaluru', latitude: 12.8399, longitude: 77.6770),
-    const PlaceEntity(id: 'p9', name: 'Nearest Hospital',
-        address: 'St. Martha\'s Hospital, Bengaluru', latitude: 12.9763, longitude: 77.5929),
-    const PlaceEntity(id: 'p10', name: 'Nearest Metro Station',
-        address: 'MG Road Metro, Bengaluru', latitude: 12.9758, longitude: 77.6060),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _placeRepository = GetIt.instance<PlaceRepository>();
+    _destFocus.requestFocus();
+  }
 
   void _onSearchChanged(String query) {
-    if (query.isEmpty) {
-      setState(() { _suggestions = []; _isSearching = false; });
+    _debounceTimer?.cancel();
+
+    if (query.trim().isEmpty) {
+      setState(() {
+        _suggestions = [];
+        _isSearching = false;
+        _isLoading = false;
+      });
       return;
     }
+
     setState(() {
       _isSearching = true;
-      _suggestions = _allPlaces
-          .where((p) =>
-              p.name.toLowerCase().contains(query.toLowerCase()) ||
-              p.address.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      _isLoading = true;
+    });
+
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () async {
+      try {
+        final results = await _placeRepository.searchPlaces(query);
+        if (mounted) {
+          setState(() {
+            _suggestions = results;
+            _isLoading = false;
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _suggestions = [];
+            _isLoading = false;
+          });
+        }
+      }
     });
   }
 
@@ -60,13 +71,8 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _destFocus.requestFocus();
-  }
-
-  @override
   void dispose() {
+    _debounceTimer?.cancel();
     _destCtrl.dispose();
     _destFocus.dispose();
     super.dispose();
@@ -89,17 +95,26 @@ class _SearchScreenState extends State<SearchScreen> {
               focusNode: _destFocus,
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: 'Search any place or say "hospital near me"',
+                hintText: 'Search any place or address…',
                 prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary),
-                suffixIcon: _destCtrl.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _destCtrl.clear();
-                          _onSearchChanged('');
-                        },
+                suffixIcon: _isLoading
+                    ? const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
                       )
-                    : null,
+                    : (_destCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _destCtrl.clear();
+                              _onSearchChanged('');
+                            },
+                          )
+                        : null),
               ),
             ),
           ),
@@ -139,7 +154,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
           // Results
           Expanded(
-            child: _suggestions.isEmpty && _isSearching
+            child: _suggestions.isEmpty && _isSearching && !_isLoading
                 ? Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -158,15 +173,11 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                   )
                 : ListView.separated(
-                    itemCount: _suggestions.isEmpty
-                        ? _allPlaces.length
-                        : _suggestions.length,
+                    itemCount: _suggestions.length,
                     separatorBuilder: (_, __) =>
                         const Divider(height: 1, indent: 56),
                     itemBuilder: (context, i) {
-                      final place = _suggestions.isEmpty
-                          ? _allPlaces[i]
-                          : _suggestions[i];
+                      final place = _suggestions[i];
                       return ListTile(
                         leading: Container(
                           width: 40,
@@ -182,7 +193,9 @@ class _SearchScreenState extends State<SearchScreen> {
                             style: AppTypography.titleLarge),
                         subtitle: Text(place.address,
                             style: AppTypography.bodyMedium
-                                .copyWith(color: AppColors.onSurfaceMuted)),
+                                .copyWith(color: AppColors.onSurfaceMuted),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis),
                         trailing: const Icon(Icons.arrow_forward_ios_rounded,
                             size: 14, color: AppColors.onSurfaceLight),
                         onTap: () => _selectDestination(place),
