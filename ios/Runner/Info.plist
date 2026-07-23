@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>$(DEVELOPMENT_LANGUAGE)</string>
+    <key>CFBundleDisplayName</key>
+    <string>EasyRoute</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>easyroute</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(FLUTTER_BUILD_NAME)</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>CFBundleVersion</key>
+    <string>$(FLUTTER_BUILD_NUMBER)</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+
+    <!-- Location permissions -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>EasyRoute needs your location to show your position on the map and provide accurate navigation directions.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>EasyRoute uses your location in the background to continue providing turn-by-turn guidance even when the app is minimized.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>EasyRoute uses your location to track your journey and alert you when you leave the planned route.</string>
+
+    <!-- Microphone for voice search -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>EasyRoute uses the microphone so you can search destinations and control navigation by speaking.</string>
+
+    <!-- Speech recognition -->
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>EasyRoute uses speech recognition to understand your voice commands like "Take me to MG Road."</string>
+
+    <!-- Google Maps -->
+    <key>GMSApiKey</key>
+    <string>$(GOOGLE_MAPS_API_KEY)</string>
+
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+    <key>UIMainStoryboardFile</key>
+    <string>Main</string>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+    </array>
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <false/>
+    <key>CADisableMinimumFrameDurationOnPhone</key>
+    <true/>
+    <key>UIApplicationSupportsIndirectInputEvents</key>
+    <true/>
+</dict>
+</plist>
